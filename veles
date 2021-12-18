@@ -9,39 +9,76 @@ end
 
 local function contents_to_array(content)
     local array = {}
-    for line in content:gmatch("[^\r\n]+") do
+    for line in content:gmatch("[^\n]+") do
         table.insert(array, line)
     end
     return array
 end
 
-local function find_repeat_count(line)
+local function extract_repeat_count(line)
     if line:find("x", 1, true) then
         local repeat_amount = line:match("x(%d+)")
-        print("Found a repeat amount: " .. repeat_amount)
+        return tonumber(repeat_amount) - 1
     end
 end
 
-print("Reading lyrics from " .. arg[1] .. ":")
+local function extract_sections(array)
+    local sections = {}
+    local section_start = 1
+    local section_end = 1
+    for i, line in ipairs(array) do
+        if line:find("[", 1, true) and not line:find("[end]", 1, true) then
+            section_start = i
+        elseif line:find("[end]", 1, true) then
+            section_end = i
+            table.insert(sections, {start = section_start, end_ = section_end})
+        end
+    end
+    return sections
+end
+
 -- The lyrics file to read.
 local lyrics = read_file(arg[1])
+-- Split the lyrics into an array of lines.
 local lines = contents_to_array(lyrics)
-for i, line in ipairs(lines) do
-    if line:find("[", 1, true) then
-        if not line:find("[end]", 1, true) then
-            print("Found a section declaration: " .. line)
-            local section_name = line:match("[^%][%s]+")
-            print("Section name: " .. section_name)
+-- Extract the sections of the lyrics.
+local sections = extract_sections(lines)
+-- TODO: Fix newline spacing between sections, currently it sometimes does double newlines.
+-- TODO: Find variables (e.g. `<Chorus>`) and expand them into the defined sections, currently they are just ignored.
+for i, section in ipairs(sections) do
+    for j = section.start, section.end_ do
+        -- If the line is a section declaration...
+        if lines[j]:find("[", 1, true) then
+            -- Print a newline before the section...
+            print()
+            -- Find the repeat count...
+            local repeat_amount = extract_repeat_count(lines[j])
+            if repeat_amount then
+                -- If the repeat count is greater than 1, then we need to repeat the section.
+                if repeat_amount > 1 then
+                    -- Repeat the section.
+                    for k = 1, repeat_amount do
+                        for l = section.start, section.end_ do
+                            local line = lines[l]:gsub("%[.*]$", "")
+                            -- Using io.write() to control the newlines. See the first TODO.
+                            io.write(line .. "\n")
+                            io.flush()
+                        end
+                    end
+                else
+                    -- Otherwise, just print the section.
+                    for l = section.start, section.end_ do
+                        local line  = lines[l]:gsub("%[.*]$", "")
+                        io.write(line)
+                        io.flush()
+                    end
+                end
+            end
         else
-            print("Found an end section declaration")
+            -- Otherwise, just print the line.
+            local line = lines[j]:gsub("%[.*]$", "")
+            io.write(line .. "\n")
+            io.flush()
         end
-        find_repeat_count(line)
-    elseif line:find("--", 1, true) then
-        print("Found a comment: " .. line)
-    elseif line:find("<", 1, true) then
-        print("Found a variable: " .. line)
-        find_repeat_count(line)
-    else
-        print("Found line of lyrics: " .. line)
     end
 end
