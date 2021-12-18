@@ -1,0 +1,47 @@
+#!/usr/bin/env lua
+
+local function read_file(file)
+    local f = io.open(file, "rb")
+    local content = f:read("*all")
+    f:close()
+    return content
+end
+
+local function contents_to_array(content)
+    local array = {}
+    for line in content:gmatch("[^\r\n]+") do
+        table.insert(array, line)
+    end
+    return array
+end
+
+local function find_repeat_count(line)
+    if line:find("x", 1, true) then
+        local repeat_amount = line:match("x(%d+)")
+        print("Found a repeat amount: " .. repeat_amount)
+    end
+end
+
+print("Reading lyrics from " .. arg[1] .. ":")
+-- The lyrics file to read.
+local lyrics = read_file(arg[1])
+local lines = contents_to_array(lyrics)
+for i, line in ipairs(lines) do
+    if line:find("[", 1, true) then
+        if not line:find("[end]", 1, true) then
+            print("Found a section declaration: " .. line)
+            local section_name = line:match("[^%][%s]+")
+            print("Section name: " .. section_name)
+        else
+            print("Found an end section declaration")
+        end
+        find_repeat_count(line)
+    elseif line:find("--", 1, true) then
+        print("Found a comment: " .. line)
+    elseif line:find("<", 1, true) then
+        print("Found a variable: " .. line)
+        find_repeat_count(line)
+    else
+        print("Found line of lyrics: " .. line)
+    end
+end
