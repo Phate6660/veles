@@ -54,6 +54,7 @@ for i, section in ipairs(sections) do
         -- If the line is a section declaration...
         if lines[j]:find("[", 1, true) then
             -- Find the repeat count...
+            is_section = true
             local repeat_amount = extract_repeat_count(lines[j])
             if repeat_amount then
                 -- If the repeat count is greater than 1, then we need to repeat the section.
@@ -77,8 +78,17 @@ for i, section in ipairs(sections) do
             end
         else
             -- Otherwise, just print the line.
-            local line = lines[j]:gsub("%[.*]$", "")
-            table.insert(output, line)
+            -- TODO: I need better logic for determining whether or not to print the line,
+            -- because currently it will sometimes duplicate lines or print reduntant empty lines.
+            if is_section then
+                local line = lines[j]:gsub("%[.*]$", "")
+                table.insert(output, line)
+                is_section = false
+            else
+                -- We need to skip over the first line of the section.
+                local line = lines[j + 1]:gsub("%[.*]$", "")
+                table.insert(output, line)
+            end
         end
     end
 end
