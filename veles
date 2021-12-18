@@ -27,10 +27,13 @@ local function extract_sections(array)
     local section_start = 1
     local section_end = 1
     for i, line in ipairs(array) do
+        -- Find the start of a section by search for `[` and the line doesn't match `[end]`.
         if line:find("[", 1, true) and not line:find("[end]", 1, true) then
             section_start = i
+        -- Find the end of the section by searching for `[end]`.
         elseif line:find("[end]", 1, true) then
             section_end = i
+            -- Add the section to the list of sections.
             table.insert(sections, {start = section_start, end_ = section_end})
         end
     end
@@ -45,12 +48,11 @@ local lines = contents_to_array(lyrics)
 local sections = extract_sections(lines)
 -- TODO: Fix newline spacing between sections, currently it sometimes does double newlines.
 -- TODO: Find variables (e.g. `<Chorus>`) and expand them into the defined sections, currently they are just ignored.
+local output = {}
 for i, section in ipairs(sections) do
     for j = section.start, section.end_ do
         -- If the line is a section declaration...
         if lines[j]:find("[", 1, true) then
-            -- Print a newline before the section...
-            print()
             -- Find the repeat count...
             local repeat_amount = extract_repeat_count(lines[j])
             if repeat_amount then
@@ -59,26 +61,26 @@ for i, section in ipairs(sections) do
                     -- Repeat the section.
                     for k = 1, repeat_amount do
                         for l = section.start, section.end_ do
+                            -- Remove any section declarations.
                             local line = lines[l]:gsub("%[.*]$", "")
-                            -- Using io.write() to control the newlines. See the first TODO.
-                            io.write(line .. "\n")
-                            io.flush()
+                            -- Add the line to the output.
+                            table.insert(output, line)
                         end
                     end
                 else
                     -- Otherwise, just print the section.
                     for l = section.start, section.end_ do
                         local line  = lines[l]:gsub("%[.*]$", "")
-                        io.write(line)
-                        io.flush()
+                        table.insert(output, line)
                     end
                 end
             end
         else
             -- Otherwise, just print the line.
             local line = lines[j]:gsub("%[.*]$", "")
-            io.write(line .. "\n")
-            io.flush()
+            table.insert(output, line)
         end
     end
 end
+
+print(table.concat(output, "\n"))
