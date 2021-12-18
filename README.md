@@ -103,3 +103,11 @@ The sick knows no pain...
   + Expand variables to define sections [TODO -- currently variables are ignored]
 - Render the parsed lyrics [WIP]
   + Fix the newline spacing [WIP]
+
+Also have the latest `rg` of TODOs in the script:
+```
+$ rg "\-\- TODO: " veles -r ""
+49:Fix newline spacing between sections, currently it sometimes does double newlines.
+50:Find variables (e.g. `<Chorus>`) and expand them into the defined sections, currently they are just ignored.
+81:            I need better logic for determining whether or not to print the line, because currently it will sometimes duplicate lines or print reduntant empty lines.
+```

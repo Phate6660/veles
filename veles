@@ -78,8 +78,7 @@ for i, section in ipairs(sections) do
             end
         else
             -- Otherwise, just print the line.
-            -- TODO: I need better logic for determining whether or not to print the line,
-            -- because currently it will sometimes duplicate lines or print reduntant empty lines.
+            -- TODO: I need better logic for determining whether or not to print the line, because currently it will sometimes duplicate lines or print reduntant empty lines.
             if is_section then
                 local line = lines[j]:gsub("%[.*]$", "")
                 table.insert(output, line)
