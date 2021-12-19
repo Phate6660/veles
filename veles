@@ -64,12 +64,12 @@ for i, section in ipairs(sections) do
                         for l = section.start, section.end_ do
                             -- Remove any section declarations.
                             local line = lines[l]:gsub("%[.*]$", "")
-                            -- Add the line to the output.
+                            -- Add each line of the section to the output, repeating as necessary.
                             table.insert(output, line)
                         end
                     end
                 else
-                    -- Otherwise, just print the section.
+                    -- Otherwise, just insert each line of the section.
                     for l = section.start, section.end_ do
                         local line  = lines[l]:gsub("%[.*]$", "")
                         table.insert(output, line)
@@ -77,17 +77,9 @@ for i, section in ipairs(sections) do
                 end
             end
         else
-            -- Otherwise, just print the line.
-            -- TODO: I need better logic for determining whether or not to print the line, because currently it will sometimes duplicate lines or print reduntant empty lines.
-            if is_section then
-                local line = lines[j]:gsub("%[.*]$", "")
-                table.insert(output, line)
-                is_section = false
-            else
-                -- We need to skip over the first line of the section.
-                local line = lines[j + 1]:gsub("%[.*]$", "")
-                table.insert(output, line)
-            end
+            -- Otherwise just insert the line.
+            local line = lines[j]:gsub("%[.*]$", "")
+            table.insert(output, line)
         end
     end
 end
