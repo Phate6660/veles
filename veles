@@ -18,7 +18,7 @@ end
 local function extract_repeat_count(line)
     if line:find("x", 1, true) then
         local repeat_amount = line:match("x(%d+)")
-        return tonumber(repeat_amount) - 1
+        return tonumber(repeat_amount)
     end
 end
 
@@ -30,11 +30,12 @@ local function extract_sections(array)
         -- Find the start of a section by search for `[` and the line doesn't match `[end]`.
         if line:find("[", 1, true) and not line:find("[end]", 1, true) then
             section_start = i
-        -- Find the end of the section by searching for `[end]`.
         elseif line:find("[end]", 1, true) then
             section_end = i
-            -- Add the section to the list of sections.
-            table.insert(sections, {start = section_start, end_ = section_end})
+            table.insert(sections, {
+                start = section_start,
+                end_ = section_end,
+            })
         end
     end
     return sections
@@ -46,42 +47,23 @@ local lyrics = read_file(arg[1])
 local lines = contents_to_array(lyrics)
 -- Extract the sections of the lyrics.
 local sections = extract_sections(lines)
--- TODO: Fix newline spacing between sections, currently it sometimes does double newlines.
--- TODO: Find variables (e.g. `<Chorus>`) and expand them into the defined sections, currently they are just ignored.
-local output = {}
-for i, section in ipairs(sections) do
-    for j = section.start, section.end_ do
-        -- If the line is a section declaration...
-        if lines[j]:find("[", 1, true) then
-            -- Find the repeat count...
-            is_section = true
-            local repeat_amount = extract_repeat_count(lines[j])
-            if repeat_amount then
-                -- If the repeat count is greater than 1, then we need to repeat the section.
-                if repeat_amount > 1 then
-                    -- Repeat the section.
-                    for k = 1, repeat_amount do
-                        for l = section.start, section.end_ do
-                            -- Remove any section declarations.
-                            local line = lines[l]:gsub("%[.*]$", "")
-                            -- Add each line of the section to the output, repeating as necessary.
-                            table.insert(output, line)
-                        end
-                    end
-                else
-                    -- Otherwise, just insert each line of the section.
-                    for l = section.start, section.end_ do
-                        local line  = lines[l]:gsub("%[.*]$", "")
-                        table.insert(output, line)
-                    end
-                end
-            end
-        else
-            -- Otherwise just insert the line.
-            local line = lines[j]:gsub("%[.*]$", "")
-            table.insert(output, line)
+-- Iterate over the sections and print the lyrics.
+for _, section in ipairs(sections) do
+    -- TODO: Remove extra blank lines caused by removing the `[` and `]` lines.
+    local lyrics = lines[section.start]:gsub("^%[.-%]$", "")
+    for i = section.start + 1, section.end_ do
+        -- Add the lyrics, removing any lines starting with `[` and ending with `]`.
+        lyrics = lyrics .. "\n" .. lines[i]:gsub("^%[.-%]$", "")
+    end
+    -- Find the repeat count of the section.
+    local repeat_count = extract_repeat_count(lines[section.start])
+    if repeat_count then
+        -- Print the lyrics `repeat_count` times.
+        for i = 1, repeat_count do
+            print(lyrics)
         end
+    else
+        -- Otherwise print the lyrics once.
+        print(lyrics)
     end
 end
-
-print(table.concat(output, "\n"))
