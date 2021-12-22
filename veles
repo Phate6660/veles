@@ -48,22 +48,31 @@ local lines = contents_to_array(lyrics)
 -- Extract the sections of the lyrics.
 local sections = extract_sections(lines)
 -- Iterate over the sections and print the lyrics.
-for _, section in ipairs(sections) do
+for n, section in ipairs(sections) do
+    -- TODO: expand variables into a full section, and save to variable to be reused later.
     -- TODO: Remove extra blank lines caused by removing the `[` and `]` lines.
-    local lyrics = lines[section.start]:gsub("^%[.-%]$", "")
+    local line = lines[section.start]
+    local line = line:gsub("^%[.-%]$", "")
     for i = section.start + 1, section.end_ do
-        -- Add the lyrics, removing any lines starting with `[` and ending with `]`.
-        lyrics = lyrics .. "\n" .. lines[i]:gsub("^%[.-%]$", "")
+        local line_without_section = lines[i]:gsub("^%[.-%]$", "")
+        if line_without_section == "" then
+            -- Skip blank lines.
+            goto continue
+        else
+            -- Add the lyrics, removing any lines starting with `[` and ending with `]`.
+            line = line .. "\n" .. lines[i]:gsub("%[.-%]$", "")
+        end
+        ::continue::
     end
     -- Find the repeat count of the section.
     local repeat_count = extract_repeat_count(lines[section.start])
     if repeat_count then
         -- Print the lyrics `repeat_count` times.
         for i = 1, repeat_count do
-            print(lyrics)
+            print(line)
         end
     else
         -- Otherwise print the lyrics once.
-        print(lyrics)
+        print(line)
     end
 end
